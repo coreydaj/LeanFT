@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using NUnit.Framework;
 using HP.LFT.SDK;
 using HP.LFT.SDK.Web;
@@ -24,10 +25,15 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
         public void TestFixtureSetUp()
         {
             // Setup once per fixture
-            // Initially create an instance of the browser and navigate to the AdVantage home page
 
+            // Optional to turn on snapshots on every step.  It can be set here this way
+            // or by making modifications to the App.config file
+            Reporter.SnapshotCaptureLevel = HP.LFT.Report.CaptureLevel.All;
+
+            // Initially create an instance of the browser and navigate to the AdVantage home page
             AdVantBrowser = BrowserFactory.Launch(BrowserType.InternetExplorer);
             AdVantBrowser.Navigate("http://alm-aob:47001/advantage/");
+            //AdVantBrowser.Navigate("http://15.126.221.115:47001/advantage/");
 
             // Create a new instance of the Application Model
 
@@ -54,12 +60,12 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
 
         // Declate the location of the datafile for transfering amounts
 
-        static string strDataSheet = @"C:\Users\Administrator\Desktop\Projects\AdVantage On-Line Banking Unit Tests\DataSheets\MoneyTransfer.xlsx";
+        static string strDataSheet = @"C:\Users\hpswadm\Desktop\Demo Information\LeanFT\Visual Studio\AdVantage On-Line Banking Unit Tests\DataSheets\MoneyTransfer.xlsx";
 
         // First test is to validate that a screen is available after the build.  Use the global array to set
         // each of the screens to be validate.
 
-        [Test,TestCaseSource("strMenuItems")]
+        [Test, TestCaseSource("strMenuItems")]
         public void TestScreenExists(string strScreenName)
         {
 
@@ -75,22 +81,21 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
             // the screenname must be converted to uppercase.
 
             var objScreenBanner = AdVantBrowser.Describe<IWebElement>(new WebElementDescription
-                {
-                    ClassName = @"center-name-text",
-                    TagName = @"SPAN",
-                    InnerText = @strScreenName.ToUpper()
-                });
+            {
+                ClassName = @"center-name-text",
+                TagName = @"SPAN",
+                InnerText = @strScreenName.ToUpper()
+            });
 
             // If the object exists on the screen, the test has passed.  Otherwise we have a failure.
 
             if (objScreenBanner.Exists())
-
             {
-                Reporter.ReportEvent("Availablity", strScreenName + " screen is Available", HP.LFT.Report.Status.Passed);
+                Reporter.ReportEvent("Availablity", strScreenName + " screen is Available", HP.LFT.Report.Status.Passed, AdVantBrowser.GetSnapshot());
             }
             else
             {
-                Reporter.ReportEvent("Availablity", strScreenName + " screen is NOT Available", HP.LFT.Report.Status.Failed);
+                Reporter.ReportEvent("Availablity", strScreenName + " screen is NOT Available", HP.LFT.Report.Status.Failed, AdVantBrowser.GetSnapshot());
                 Assert.Fail();
             }
 
@@ -114,10 +119,10 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
 
             // Define the Row Count, the columns in the spreadsheet that hold the 'From Account', 'To Account' and 'Amount' respectively.
 
-            int rCnt            = 0;
-            int FrmAccountCol   = 1;
-            int ToAccountCol    = 2;
-            int AmountCol       = 3;
+            int rCnt = 0;
+            int FrmAccountCol = 1;
+            int ToAccountCol = 2;
+            int AmountCol = 3;
 
             // Open a new instance EXCEL.  Then open the data sheet that's defined the the global variable strDataSheet
 
@@ -135,7 +140,7 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
 
             // Starting at row 2 (row 1 is the header information) loop through each row that has data
 
-            for (rCnt=2; rCnt <= DataRange.Rows.Count; rCnt++)
+            for (rCnt = 2; rCnt <= DataRange.Rows.Count; rCnt++)
             {
                 // First click on the 'Money Transfer' link in the left menu
 
@@ -161,21 +166,21 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
 
                 foreach (IListItem MyItems in MyVantModel.AdvantageOnlineBankingPage.FromAccount.Items)
                 {
-                   // If the current list item contains the text from the spreadsheet - Then reset the
-                   // string holding the account number to be the full text and then select it from the list
+                    // If the current list item contains the text from the spreadsheet - Then reset the
+                    // string holding the account number to be the full text and then select it from the list
 
-                   if (MyItems.Text.Contains(strFromAccount))
+                    if (MyItems.Text.Contains(strFromAccount))
                     {
-                       strFromAccount = MyItems.Text;
-                       MyVantModel.AdvantageOnlineBankingPage.FromAccount.Select(strFromAccount);
+                        strFromAccount = MyItems.Text;
+                        MyVantModel.AdvantageOnlineBankingPage.FromAccount.Select(strFromAccount);
 
                     }
-                   else if (MyItems.Text.Contains(strToAccount))
-                   {
-                  
-                      strToAccount = MyItems.Text;
-                      MyVantModel.AdvantageOnlineBankingPage.ToAccount.Select(strToAccount);
-                   }
+                    else if (MyItems.Text.Contains(strToAccount))
+                    {
+
+                        strToAccount = MyItems.Text;
+                        MyVantModel.AdvantageOnlineBankingPage.ToAccount.Select(strToAccount);
+                    }
                 }
                 // Click the 'Next' button.
 
@@ -185,7 +190,7 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
                 // click the 'Next' button.
 
                 MyVantModel.AdvantageOnlineBankingPage.Amount.SetValue(strAmount);
-                MyVantModel.AdvantageOnlineBankingPage.TransferDate.SetValue(DateTime.Now.ToString("dd/MM/yyyy"));
+                MyVantModel.AdvantageOnlineBankingPage.TransferDate.SetValue(DateTime.Now.ToString("MM/dd/yyyy"));
                 MyVantModel.AdvantageOnlineBankingPage.NextButton.Click();
 
                 // Click Ok to complete the transfer
@@ -197,17 +202,17 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
 
                 if (MyVantModel.AmountTransfered.InnerText.Contains(strAmount))
                 {
-                    Reporter.ReportEvent("MoneyTransfer", "Money Transfered Successfully", HP.LFT.Report.Status.Passed);
+                    Reporter.ReportEvent("MoneyTransfer", "Money Transfered Successfully", HP.LFT.Report.Status.Passed, AdVantBrowser.GetSnapshot());
 
                 }
                 else
                 {
-                    Reporter.ReportEvent("MoneyTransfer", "Money Not Transfered", HP.LFT.Report.Status.Failed);
+                    Reporter.ReportEvent("MoneyTransfer", "Money Not Transfered", HP.LFT.Report.Status.Failed, AdVantBrowser.GetSnapshot());
                     Assert.Fail();
 
                 }
 
-              }
+            }
 
 
         }
@@ -219,9 +224,24 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
             // Clean up after each test
             // Click the Logout
 
-            MyVantModel.AdvantageOnlineBankingPage.Logout.Click();
+            if (MyVantModel.AdvantageOnlineBankingPage.Logout.Exists())
+            {
+                MyVantModel.AdvantageOnlineBankingPage.Logout.Click();
+            }
+            else
+            {
+                // if the screen does not have a 'logout' link, we need to report it.
+
+                Reporter.ReportEvent("Missing Link", "The Following URL is missing the Logout Link: " + AdVantBrowser.URL, HP.LFT.Report.Status.Warning, AdVantBrowser.GetSnapshot());
+
+                AdVantBrowser.Navigate("http://alm-aob:47001/advantage/");
+                //AdVantBrowser.Navigate("http://15.126.221.115:47001/advantage/");
+                MyVantModel.AdvantageOnlineBankingPage.Logout.Click();
+            }
+
 
         }
+
 
         [TestFixtureTearDown]
         public void TestFixtureTearDown()
@@ -231,6 +251,11 @@ namespace AdVantage_On_Line_Banking_Unit_Tests
 
             AdVantBrowser.Close();
 
+            // The following are optional lines if you wish the report to open
+            // automatically at the end of the execution
+            Reporter.GenerateReport();
+            IBrowser browser = BrowserFactory.Launch(BrowserType.Chrome);
+            browser.Navigate(@"file:///" + Directory.GetCurrentDirectory() + @"\RunResults\runresults.html");
         }
     }
 }
